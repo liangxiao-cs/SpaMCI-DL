@@ -107,7 +107,7 @@ class ZINB(NB):
 
 def preprocess(adata):
     sc.pp.filter_genes(adata, min_cells=10)
-    # sc.pp.filter_genes(adata, min_counts=10)  # 没有什么影响，可能是因为上面的原因
+    # sc.pp.filter_genes(adata, min_counts=10)
     sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=3000)
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
@@ -289,7 +289,7 @@ if __name__ == "__main__":
         plt.savefig('./HBC_res/HBC_ari_spaLJP.pdf', bbox_inches='tight', dpi=600)
         plt.savefig('./HBC_res/HBC_ari_spaLJP.png', bbox_inches='tight', dpi=600)
 
-        # umap及paga
+        # 
         # adata.obsm['rep'] = emb
         # sc.pp.neighbors(adata, use_rep='rep')
         # sc.tl.umap(adata)
