@@ -65,11 +65,6 @@
 #         return output
 
 
-# _*_coding : utf-8_*_
-# @Time : 2023/10/29 16:39
-# @Author :刘威
-# @File :layers
-# @Project :SpaGIC
 
 import math
 import torch
