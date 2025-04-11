@@ -11,4 +11,4 @@ Upon paper acceptance, we will:
 
 4.Provide full documentation  
 
-Current Status: The paper has been submitted to [***Communications Biology***] and is under review.
+Current Status: The paper has been submitted to [***Future Generation Computer Systems***] and is under review.
