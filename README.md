@@ -1,4 +1,4 @@
-# Integrated detection of spatial domains and spatially variable genes in spatial transcriptomics with SpaMCI-DL
+# A multi-task ensemble analysis framework with hybrid deep learning for spatial transcriptomics
 
 This repository contains the implementation for [***SpaMCI-DL***]. As the paper is still under review, this repository currently provides key implementation examples demonstrating the core functionality.
 Upon paper acceptance, we will:
