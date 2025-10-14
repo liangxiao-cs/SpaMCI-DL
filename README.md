@@ -11,4 +11,4 @@ Upon paper acceptance, we will:
 
 4.Provide full documentation  
 
-Current Status: The paper has been submitted to [***Research***] and is under review.
+Current Status: The paper has been submitted to [***BIBM 2025***] and is under review.
