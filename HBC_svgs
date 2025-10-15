@@ -63,9 +63,7 @@ def single_target_integrated_gradients(inputs, c, model, std_multiplier=1.5):
     print('single_target_integrated_gradients start ' + str(c))
     ig_1 = IntegratedGradients(model)
     inputs_1 = inputs.clone()
-    # print('inputs_1.shape:', inputs_1.shape)
     inputs_1.requires_grad_()
-    # print('n_sample:', n_sample)
     baselines = torch.zeros_like(inputs_1)
     # 1
     attributions = ig_1.attribute(inputs_1, baselines=baselines, target=c, n_steps=10)
