@@ -1,66 +1,23 @@
-from __future__ import division
-from __future__ import print_function
-
-import torch
 import torch.optim as optim
 from utils import *
-from models import spaLJP
+from models import SpaMCI
 import os
-import argparse
 from config import Config
 from sklearn import metrics
 import pandas as pd
-import matplotlib.pyplot as plt
-
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from sklearn.decomposition import PCA
-
 import random
 from torch.backends import cudnn
 import torch.nn.functional as F
-
-from functools import partial
 import torch.nn as nn
-
-from sklearn.metrics import silhouette_score, davies_bouldin_score
-from tqdm import tqdm
 import ot
-
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
-
 import warnings
-
 warnings.filterwarnings("ignore")
-
-
-def sce_loss(x, y, alpha=3):
-    x = F.normalize(x, p=2, dim=-1)
-    y = F.normalize(y, p=2, dim=-1)
-
-    # loss =  - (x * y).sum(dim=-1)
-    # loss = (x_h - y_h).norm(dim=1).pow(alpha)
-
-    loss = (1 - (x * y).sum(dim=-1)).pow_(alpha)
-
-    loss = loss.mean()
-    return loss
-
-
-def setup_loss_fn(loss_fn, alpha_l=3):
-    if loss_fn == "mse":
-        criterion = nn.MSELoss()
-    elif loss_fn == "sce":
-        criterion = partial(sce_loss, alpha=alpha_l)
-    else:
-        raise NotImplementedError
-    return criterion
 
 
 def _nan2inf(x):
     return torch.where(torch.isnan(x), torch.zeros_like(x) + np.inf, x)
-
 
 class NB():
     def __init__(self, theta=None, scale_factor=1.0):
@@ -107,7 +64,6 @@ class ZINB(NB):
 
 def preprocess(adata):
     sc.pp.filter_genes(adata, min_cells=10)
-    # sc.pp.filter_genes(adata, min_counts=10)
     sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=3000)
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
@@ -166,7 +122,6 @@ def refine_label(adata, radius=50, key='label'):
 
     new_type = [str(i) for i in list(new_type)]
     # adata.obs['label_refined'] = np.array(new_type)
-
     return new_type
 
 
@@ -205,21 +160,9 @@ if __name__ == "__main__":
         sadj = sadj.to(device)
         num_sadj = num_sadj.to(device)
 
-    # config.alpha = 1
-    # config.beta = 0
-    # config.gamma = 1
-    # epoch_max = 0
-    # ari_max = 0
-    # idx_max = []
-    # mean_max = []
-    # emb_max = []
 
     kmeans = KMeans(n_clusters=n_clusters)
-    # criterion = setup_loss_fn(loss_fn='sce', alpha_l=2)
     BCE_loss = nn.BCEWithLogitsLoss()
-    # alpha_values = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
-    # beta_values = [0.01, 0.05, 0.1, 0.5, 1, 5, 10]
-    # gamma_values = [0.01, 0.05, 0.1, 0.5, 1, 5, 10]
     alpha_values = [25]
     beta_values = [0.05]
     gamma_values = [1]
@@ -229,8 +172,7 @@ if __name__ == "__main__":
                 print(alpha, beta, gamma)
                 fix_seed(2025)
                 HBC_rec = []
-                # print(alpha, beta, gamma)
-                model = spaLJP(nfeat=features.shape[1],
+                model = SpaMCI(nfeat=features.shape[1],
                                nhid1=config.nhid1,
                                nhid2=config.nhid2,
                                dropout=config.dropout)
@@ -248,14 +190,10 @@ if __name__ == "__main__":
                     loss_adj = BCE_loss(emb_adj, num_sadj)
 
                     recon_loss = F.mse_loss(features, de_emb)
-
-                    # x_init = features[mask_nodes]
-                    # x_rec = de_emb[mask_nodes]
-                    # mask_loss = criterion(x_rec, x_init)
                     zinb_loss = ZINB(pi, theta=disp, ridge_lambda=0).loss(features_bi, mean, mean=True)
 
                     total_loss = alpha * recon_loss + beta * zinb_loss + gamma * loss_adj
-                    # total_loss = m_recon_loss
+
                     total_loss.backward()
                     optimizer.step()
                     optimizer.zero_grad()
@@ -265,43 +203,13 @@ if __name__ == "__main__":
                     emb, emb_bi, de_emb, pi, disp, mean = model(features, features_bi, sadj)
                     emb = emb.cpu().numpy()
                     idx_1 = kmeans.fit(emb).labels_
-                    # adata.obs['domain'] = idx_1
-                    # adata.obsm['spatial'] = adata.obsm['spatial'].astype(int)
-                    # idx = refine_label(adata, radius=30, key='domain')
                     adata.obs['domain'] = idx_1
                     adata.obs['domain'] = adata.obs['domain'].astype('category')
                     new_type = refine_label(adata, radius=50, key='domain')
                     ARI = metrics.adjusted_rand_score(adata.obs['ground_truth'], new_type)
                     print('ARI:', ARI)
-
                     de_emb = de_emb.cpu().numpy()
                     gene_name = adata.var.index
-                    np.save('HBC_res/de_emb.npy', de_emb)
-                    np.save('HBC_res/new_type.npy', idx_1)
-                    np.save('HBC_res/gene_name.npy', gene_name)
-
-        adata.obsm["spatial"] = adata.obsm["spatial"].astype(float)
-
-        # # 2 
-
-        tmp_ARI = format(round(ARI, 2), ".2f")
-        sc.pl.spatial(adata, color=['domain'], title='spaLJP: ARI={}'.format(tmp_ARI), show=False, img_key='hires')
-        plt.savefig('./HBC_res/HBC_ari_spaLJP.pdf', bbox_inches='tight', dpi=600)
-        plt.savefig('./HBC_res/HBC_ari_spaLJP.png', bbox_inches='tight', dpi=600)
-
-        # 
-        # adata.obsm['rep'] = emb
-        # sc.pp.neighbors(adata, use_rep='rep')
-        # sc.tl.umap(adata)
-        # plt.rcParams["figure.figsize"] = (3, 3)
-        # sc.tl.paga(adata, groups='domain')
-        # sc.pl.paga_compare(adata, legend_fontsize=10, frameon=False, size=15, title='spaLJP',
-        #                    legend_fontoutline=2, show=False)
-        # plt.savefig('./HBC_res/HBC_paga_spaLJP.pdf', bbox_inches='tight', dpi=600)
-        # plt.savefig('./HBC_res/HBC_paga_spaLJP.png', bbox_inches='tight', dpi=600)
-
-        # spaLJP  0.6562
-        # SpaGIC
-        # BINARY
-        #   SEDR
-        # spaVAE
+                    # np.save('HBC_res/de_emb.npy', de_emb)
+                    # np.save('HBC_res/new_type.npy', idx_1)
+                    # np.save('HBC_res/gene_name.npy', gene_name)
