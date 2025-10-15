@@ -1,14 +1,3 @@
 # SpaMCI-DL: A hybrid deep learning framework for integrated identification of domains and spatially variable genes in spatial transcriptomics
 
-This repository contains the implementation for [***SpaMCI-DL***]. As the paper is still under review, this repository currently provides key implementation examples demonstrating the core functionality.
-Upon paper acceptance, we will:
-
-1.Release the complete codebase  
-
-2.Add comprehensive code comments  
-
-3.Standardize all implementations for better readability  
-
-4.Provide full documentation  
-
-Current Status: The paper has been submitted to [***BIBM 2025***] and is under review.
+<img width="2144" height="1150" alt="image" src="https://github.com/user-attachments/assets/be35c3db-7160-42c1-8f2c-e47fc915372e" />
