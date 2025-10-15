@@ -127,7 +127,7 @@ def refine_label(adata, radius=50, key='label'):
 
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    config_file = './config/Human_Breast_Cancer.ini'
+    config_file = 'Human_Breast_Cancer.ini'
     config = Config(config_file)
     file_fold = '/home/liangxiao/lllxxx/Human_Breast_Cancer/'
     adata = sc.read_visium(file_fold)
